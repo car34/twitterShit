@@ -81,16 +81,19 @@ app.get('/sessions/callback', function(req, res){
     } else {
       req.session.oauthAccessToken = oauthAccessToken;
       req.session.oauthAccessTokenSecret = oauthAccessTokenSecret;
-      // Right here is where we would write out some nice user stuff
-      consumer.get("http://api.twitter.com/1/statuses/user_timeline.json?max_id=124844694537633800&include_entities=true&user_id=8695932", req.session.oauthAccessToken, req.session.oauthAccessTokenSecret, function (error, data, response) {
-        if (error) {
+
+      //Need to grab oldest ID in DB in order to start requesting from there
+      lastTweetID = 124844694537633800;
+
+      consumer.get("http://api.twitter.com/1/statuses/user_timeline.json?max_id=" + lastTweetID + "&include_entities=true&user_id=8695932", req.session.oauthAccessToken, req.session.oauthAccessTokenSecret, function (error, data, response) {
+      if (error) {
           res.send("Error getting twitter screen name : " + sys.inspect(error), 500);
-        } else {
-          var parsedData = JSON.parse(data)
-          sys.inspect(parsedData)
-          sys.put(parsedData)
+      }
+      else {
+          var parsedData = JSON.parse(data);
+          sys.inspect(parsedData);
           req.session.twitterScreenName = parsedData["name"];
-          res.send('You are signed in: ' + req.session.twitterScreenName)
+          res.send('You are signed in: ' + req.session.twitterScreenName);
 
             db.save([{name: req.session.twitterScreenName, }], function (err, res) {
             sys.puts(res);
