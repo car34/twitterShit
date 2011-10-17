@@ -106,5 +106,3 @@ app.get('/sessions/callback', function(req, res){
 });
 
 app.listen(4000);
-
-
