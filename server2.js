@@ -18,6 +18,8 @@ var twitterID = 8695932;
 var cradle = require('cradle'),
     sys = require('sys');
 
+var async = require('async');
+
 var conn = new (cradle.Connection)();
 var db = conn.database('test');
 db.create();
@@ -83,61 +85,70 @@ app.get('/sessions/callback', function(req, res) {
             req.session.oauthAccessTokenSecret = oauthAccessTokenSecret;
 
             //Need to grab oldest ID in DB in order to start requesting from there
-            var id = 0;
-            for (var y = 0; y < 2; y++) {
-                if (id == 0) {
-                    lastTweetID = 123436334810529800;
+            var startId = 123436334810529800;
+
+            async.waterfall([
+                function(callback) {
+                    tweetQuery(req, startId, callback);
+                },
+                function(nextId, callback) {
+                    tweetQuery(req, nextId, callback);
                 }
-                else {
-                    lastTweetID = id;
-                }
-                consumer.get("http://api.twitter.com/1/statuses/user_timeline.json?max_id=" + lastTweetID + "&include_entities=true&user_id=8695932", req.session.oauthAccessToken, req.session.oauthAccessTokenSecret, function (error, data, response) {
-                    if (error) {
-                        res.send("Error getting twitter screen name : " + sys.inspect(error), 500);
-                    }
-                    else {
-                        var parsedData = JSON.parse(data);
-                        sys.inspect(parsedData);
-                        for (var x = 0; x < parsedData.length; x++) {
-                            var twt = parsedData[x];
+            ]);
 
-                            var name = twt.user.name;
-                            var followers_count = twt.user.followers_count;
-
-                            var content = twt.text;
-                            var time = twt.created_at;
-                            id = twt.id;
-                            var retweet = twt.retweet_count;
-                            var url = twt.entities.urls.url;
-                            var hashtag = twt.entities.hashtags;
-                            var user_mentions = twt.entities.user_mentions;
-
-                            sys.puts(id);
-                            db.save([
-                                {name: name,
-                                    followers_count: followers_count,
-                                    content: content,
-                                    time: time,
-                                    tweet_id: id,
-                                    retweet_count: retweet,
-                                    urls: url,
-                                    hashtags: hashtag,
-                                    user_mentions: user_mentions}
-                            ],
-                                function (err, res) {
-                                    if (err) {
-                                        sys.puts(err);
-                                    }
-                                }
-
-                            );
-                        }
-                    }
-                });
-                sys.puts("the last id: " + id);
-            }
         }
+
     });
 });
+
+
+function tweetQuery(req, startId, callback) {
+    var id = startId;
+    console.log(startId);
+    consumer.get("http://api.twitter.com/1/statuses/user_timeline.json?max_id=" + (id - 1).toString() + "&include_entities=true&user_id=8695932", req.session.oauthAccessToken, req.session.oauthAccessTokenSecret, function (error, data, response) {
+                if (error) {
+                    res.send("Error getting twitter screen name : " + sys.inspect(error), 500);
+                }
+                else {
+                    var parsedData = JSON.parse(data);
+                    sys.inspect(parsedData);
+                    for (var x = 0; x < parsedData.length; x++) {
+                        var twt = parsedData[x];
+
+                        var name = twt.user.name;
+                        var followers_count = twt.user.followers_count;
+
+                        var content = twt.text;
+                        var time = twt.created_at;
+                        id = twt.id;
+                        var retweet = twt.retweet_count;
+                        var url = twt.entities.urls.url;
+                        var hashtag = twt.entities.hashtags;
+                        var user_mentions = twt.entities.user_mentions;
+
+                        sys.puts(id);
+                        db.save([
+                            {name: name,
+                                followers_count: followers_count,
+                                content: content,
+                                time: time,
+                                tweet_id: id,
+                                retweet_count: retweet,
+                                urls: url,
+                                hashtags: hashtag,
+                                user_mentions: user_mentions}
+                        ],
+                            function (err, res) {
+                                if (err) {
+                                    sys.puts(err);
+                                }
+                            }
+
+                        );
+                    }
+                    callback(null, id);
+                }
+            });
+}
 
 app.listen(4000);

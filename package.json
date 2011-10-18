@@ -32,7 +32,8 @@
    "dependencies": {
        "express": "2.x",
        "oauth": "latest",
-       "cradle": "latest"
+       "cradle": "latest",
+       "async": ""
    },
    "directories": {
    }
