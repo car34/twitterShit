@@ -1,0 +1,39 @@
+{
+   "name": "twitterShit",
+   "version": "0.1.1",
+   "description": "Oauth. Takes get requests and put into couchdb",
+   "keywords": "",
+   "maintainers": [
+       {
+           "name": "Christopher Reich",
+           "email": "chris.reich@duke.edu"
+       }
+   ],
+   "contributors": [
+       {
+           "name": "Christopher Reich",
+           "email": "chris.reich@duke.edu"
+       }
+   ],
+   "bugs": {
+   },
+   "licenses": [
+       {
+           "type": "",
+           "url": ""
+       }
+   ],
+   "repositories": [
+       {
+           "type": "git",
+           "url": "https://car34@github.com/car34/twitterShit.git"
+       }
+   ],
+   "dependencies": {
+       "express": "2.x",
+       "oauth": "latest",
+       "cradle": "latest"
+   },
+   "directories": {
+   }
+}
