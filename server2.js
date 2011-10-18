@@ -10,9 +10,9 @@ var sys = require('sys');
 var oauth = require('oauth');
 var cradle = require('cradle')
 //--------newspaper info------------------------
-var paperName = 'charlotteobserver';
-var twitterUser = 'theobserver';
-var twitterID = 8695932;
+var paperName = 'lake_norman_news';
+var twitterUser = 'cabarrusnews';
+var twitterID = 76394863;
 
 //--------Initialize CouchDB-Cradle-----------------------
 var cradle = require('cradle'),
@@ -21,7 +21,7 @@ var cradle = require('cradle'),
 var async = require('async');
 
 var conn = new (cradle.Connection)();
-var db = conn.database('test');
+var db = conn.database(paperName);
 db.create();
 sys.puts('Database Created');
 
@@ -85,16 +85,10 @@ app.get('/sessions/callback', function(req, res) {
             req.session.oauthAccessTokenSecret = oauthAccessTokenSecret;
 
             //Need to grab oldest ID in DB in order to start requesting from there
-            var startId = 123436334810529800;
+            var startId = 125958085620670460;
+            var count = 30;
 
-            async.waterfall([
-                function(callback) {
-                    tweetQuery(req, startId, callback);
-                },
-                function(nextId, callback) {
-                    tweetQuery(req, nextId, callback);
-                }
-            ]);
+            tweetQuery(req, startId, tweetQuery, count);
 
         }
 
@@ -102,7 +96,8 @@ app.get('/sessions/callback', function(req, res) {
 });
 
 
-function tweetQuery(req, startId, callback) {
+function tweetQuery(req, startId, callback, count) {
+
     var id = startId;
     console.log(startId);
     consumer.get("http://api.twitter.com/1/statuses/user_timeline.json?max_id=" + (id - 1).toString() + "&include_entities=true&user_id=8695932", req.session.oauthAccessToken, req.session.oauthAccessTokenSecret, function (error, data, response) {
@@ -146,7 +141,7 @@ function tweetQuery(req, startId, callback) {
 
                         );
                     }
-                    callback(null, id);
+                    if (--count > 0) callback(req, id, callback, count);
                 }
             });
 }
