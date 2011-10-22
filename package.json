@@ -33,7 +33,8 @@
        "express": "2.x",
        "oauth": "latest",
        "cradle": "latest",
-       "async": ""
+       "async": "",
+       "jade": ""
    },
    "directories": {
    }
