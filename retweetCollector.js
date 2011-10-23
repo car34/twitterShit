@@ -8,11 +8,9 @@
 var express = require('express');
 var sys = require('sys');
 var oauth = require('oauth');
-var cradle = require('cradle')
+var cradle = require('cradle');
 //--------newspaper info------------------------
-var paperName = 'test';
-var twitterUser = paperName;
-var twitterID = 128255214;
+var paperName = 'cabarrusnews';
 
 //--------Initialize CouchDB-Cradle-----------------------
 var cradle = require('cradle'),
@@ -33,17 +31,16 @@ db.save('_design/tweets', {
     }
 });
 
-db.view('tweets/all', function (err, res) {
 
-}
-
-
- 
 //-------OAuth----------------------------------
 var app = express.createServer();
 
 var _twitterConsumerKey = "q3SYGIulMaacHiHf23Xng";
 var _twitterConsumerSecret = "oFWJmn2E2S6EtFIyPtieHKnQZbiNhvo6c9IKWDt74";
+
+var token;
+var secret;
+var verifier;
 
 consumer = new oauth.OAuth(
     "https://twitter.com/oauth/request_token",
@@ -87,76 +84,94 @@ app.get('/sessions/connect', function(req, res) {
 //-------------------Requesting Data From Twitter--------------------------
 
 app.get('/sessions/callback', function(req, res) {
-    sys.puts(">>" + req.session.oauthRequestToken);
-    sys.puts(">>" + req.session.oauthRequestTokenSecret);
-    sys.puts(">>" + req.query.oauth_verifier);
+    token = req.session.oauthRequestToken;
+    secret = req.session.oauthRequestTokenSecret;
+    verifier = req.query.oauth_verifier;
     consumer.getOAuthAccessToken(req.session.oauthRequestToken, req.session.oauthRequestTokenSecret, req.query.oauth_verifier, function(error, oauthAccessToken, oauthAccessTokenSecret, results) {
         if (error) {
             res.send("Error getting OAuth access token : " + sys.inspect(error) + "[" + oauthAccessToken + "]" + "[" + oauthAccessTokenSecret + "]" + "[" + sys.inspect(results) + "]", 500);
         } else {
-            req.session.oauthAccessToken = oauthAccessToken;
-            req.session.oauthAccessTokenSecret = oauthAccessTokenSecret;
-
-            //Need to grab oldest ID in DB in order to start requesting from there
-            var startId = 126679936479137800;
-            var count = 30;
-
-            tweetQuery(req, startId, tweetQuery, count);
-
+            token = oauthAccessToken;
+            secret = oauthAccessTokenSecret;
+            res.redirect('/retweets');
         }
-
+        });
     });
+app.get('/retweets', function(req, res) {
+    db.view('tweets/all', function (err, docs) {
+
+                    if (err) {
+                        console.log(err);
+                    }
+                    else {
+                        docs.map(tweetQuery);
+                    }
+                    //Need to grab oldest ID in DB in order to start requesting from there
+            });
 });
 
+    function tweetQuery(doc) {
+        console.log(doc);
+        var tweetID = doc.tweet_id;
+        var retweets = [];
+        consumer.get("http://api.twitter.com/1/statuses/retweets/" + tweetID + ".json?include_entities=true&trim_user=0", token, secret, function (error, data, response) {
+            if (error) {
+                console.log("Error getting tweet : " + sys.inspect(error), 500);
+                return;
+            }
+            else {
+                var parsedData = JSON.parse(data);
+                sys.inspect(parsedData);
+                for (var x = 0; x < parsedData.length; x++) {
+                    var twt = parsedData[x];
+                    console.log(twt);
+                    var retweet = 1;
+                    var name = twt.user.name;
+                    var description = twt.user.description;
+                    var followers_count = twt.user.followers_count;
+                    var location = twt.user.location;
 
-function tweetQuery(req, startId, callback, count) {
+                    var content = twt.text;
+                    var time = twt.created_at;
+                    var id = tweetID;
+                    var retweet = twt.retweet_count;
+                    var hashtag = twt.entities.hashtags;
+                    var user_mentions = twt.entities.user_mentions;
 
-    var id = startId;
-    console.log(startId);
-    consumer.get("http://api.twitter.com/1/statuses/user_timeline.json?max_id=" + (id - 1).toString() + "&include_entities=true&user_id=" + twitterID , req.session.oauthAccessToken, req.session.oauthAccessTokenSecret, function (error, data, response) {
-                if (error) {
-                    res.send("Error getting twitter screen name : " + sys.inspect(error), 500);
-                }
-                else {
-                    var parsedData = JSON.parse(data);
-                    sys.inspect(parsedData);
-                    for (var x = 0; x < parsedData.length; x++) {
-                        var twt = parsedData[x];
 
-                        var name = twt.user.name;
-                        var followers_count = twt.user.followers_count;
-
-                        var content = twt.text;
-                        var time = twt.created_at;
-                        id = twt.id;
-                        var retweet = twt.retweet_count;
-                        var url = twt.entities.urls.url;
-                        var hashtag = twt.entities.hashtags;
-                        var user_mentions = twt.entities.user_mentions;
-
-                        sys.puts(id);
-                        db.save([
-                            {name: name,
+                    retweets.push({
+                                name: name,
+                                description: description,
+                                location: location,
                                 followers_count: followers_count,
                                 content: content,
                                 time: time,
                                 tweet_id: id,
                                 retweet_count: retweet,
-                                urls: url,
                                 hashtags: hashtag,
-                                user_mentions: user_mentions}
-                        ],
-                            function (err, res) {
-                                if (err) {
-                                    sys.puts(err);
-                                }
-                            }
+                                user_mentions: user_mentions
+                            });
 
-                        );
-                    }
-                    if (--count > 0) callback(req, id, callback, count);
+
                 }
-            });
-}
+            }
 
-app.listen(4000);
+            db.merge(
+                        doc._id,
+                        {
+                            retweets: retweets
+                        }
+                    ,
+                        function (err, res) {
+                            if (err) {
+                                sys.puts(err);
+                            } else {
+                                console.log("ADDED " + doc._id);
+                            }
+                        }
+
+                    );
+        });
+    }
+
+    app.listen(4000);
