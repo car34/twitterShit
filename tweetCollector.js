@@ -10,8 +10,6 @@ var sys = require('sys');
 var oauth = require('oauth');
 var cradle = require('cradle')
 //--------newspaper info------------------------
-var paperName = 'test';
-var twitterUser = paperName;
 var twitterID = 128255214;
 
 //--------Initialize CouchDB-Cradle-----------------------
@@ -21,14 +19,13 @@ var cradle = require('cradle'),
 var async = require('async');
 
 var conn = new (cradle.Connection)();
-var db = conn.database(paperName);
+var db = conn.database('test');
 db.create();
 sys.puts('Database Created');
 
  
 //-------OAuth----------------------------------
 var app = express.createServer();
-
 var _twitterConsumerKey = "q3SYGIulMaacHiHf23Xng";
 var _twitterConsumerSecret = "oFWJmn2E2S6EtFIyPtieHKnQZbiNhvo6c9IKWDt74";
 
@@ -85,8 +82,8 @@ app.get('/sessions/callback', function(req, res) {
             req.session.oauthAccessTokenSecret = oauthAccessTokenSecret;
 
             //Need to grab oldest ID in DB in order to start requesting from there
-            var startId = 126679936479137800;
-            var count = 30;
+            var startId = 312153555976585216;
+            var count = 1;
 
             tweetQuery(req, startId, tweetQuery, count);
 

@@ -10,7 +10,7 @@ var sys = require('sys');
 var oauth = require('oauth');
 var cradle = require('cradle');
 //--------newspaper info------------------------
-var paperName = 'cabarrusnews';
+
 
 //--------Initialize CouchDB-Cradle-----------------------
 var cradle = require('cradle'),
@@ -19,14 +19,14 @@ var cradle = require('cradle'),
 var async = require('async');
 
 var conn = new (cradle.Connection)();
-var db = conn.database(paperName);
+var db = conn.database('tweets');
 db.create();
 sys.puts('Database Created');
 
 db.save('_design/tweets', {
     all: {
         map: function (doc) {
-            if (doc.retweet_count > 0) emit(doc.tweet_id, doc);
+            if (doc.retweet_count > 0 && !doc.retweets) emit(doc.tweet_id, doc);
         }
     }
 });
