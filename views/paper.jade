@@ -3,6 +3,12 @@
         .content
             h1= newspaper
             each tweet in tweets
-                h5 #{tweet.time}
-                h6 Followers: #{tweet.followers_count} - Retweets: #{tweet.retweet_count}
+                h5 #{tweet.time} - Retweets: #{tweet.retweet_count} - Followers: #{tweet.followers_count}
                 p #{tweet.content}
+                if (tweet.retweets)
+                    .retweets
+                        each retweet in tweet.retweets
+                            .retweet
+                                p #{retweet.name}(#{retweet.followers_count}) - #{retweet.location} - #{retweet.description}
+                                p #{retweet.content}
+                            

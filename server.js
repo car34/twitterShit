@@ -84,8 +84,10 @@ app.get('/paper/:paperName', function(req, res) {
     }
     db.view('tweets/getNewsPaper', query, function (err, tweets) {
         tweets = tweets.map(function(tweet) {
+            tweet.time = tweet.time.split("+")[0];
             return tweet;
-        })
+        });
+        
         res.render('paper', {
             title: 'Tweets',
             newspaper: paperName,
@@ -95,10 +97,5 @@ app.get('/paper/:paperName', function(req, res) {
 
 });
 
-
 app.listen(4000);
-
-
-var paperName2 = 'test2';
-var tweets2 = [];
 
