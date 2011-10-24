@@ -86,7 +86,6 @@ app.get('/paper/:paperName', function(req, res) {
         tweets = tweets.map(function(tweet) {
             return tweet;
         })
-        console.log(tweets);
         res.render('paper', {
             title: 'Tweets',
             newspaper: paperName,
