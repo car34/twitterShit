@@ -71,21 +71,29 @@ app.get('/', function(req, res) {
    res.render('index');
 });
 
-app.get(':paperName', function(req, res) {
-    var paperName = req.params.id;
-    console.log(paperName);
+app.get('/paper/:paperName', function(req, res) {
+    var paperName = req.params.paperName;
+
+
     var tweets = [];
 
-    db.view('tweets/getNewsPaper', function (err, response) {
-        response.forEach(function (row) {
-            tweets.push(row);
+    var query = {
+        startkey: [paperName, {}],
+        endkey: [paperName],
+        descending: true
+    }
+    db.view('tweets/getNewsPaper', query, function (err, tweets) {
+        tweets = tweets.map(function(tweet) {
+            return tweet;
+        })
+        console.log(tweets);
+        res.render('paper', {
+            title: 'Tweets',
+            newspaper: paperName,
+            tweets: tweets
         });
     });
-    res.render('index', {
-        title: 'Tweets',
-        newspaper: paperName,
-        tweets: tweets
-    });
+
 });
 
 

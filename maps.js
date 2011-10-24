@@ -26,7 +26,7 @@ db.save('_design/tweets', {
         },
         getNewsPaper: {
             map: function(doc) {
-                emit(doc.name, doc);
+                emit([doc.name, doc.tweet_id], doc);
             }
         }
 });
