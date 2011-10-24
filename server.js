@@ -83,6 +83,8 @@ app.get('/paper/:paperName', function(req, res) {
         descending: true
     }
     db.view('tweets/getNewsPaper', query, function (err, tweets) {
+        console.log(err);
+        console.log(tweets);
         tweets = tweets.map(function(tweet) {
             tweet.time = tweet.time.split("+")[0];
             return tweet;

@@ -23,13 +23,6 @@ var db = conn.database('tweets');
 db.create();
 sys.puts('Database Created');
 
-db.save('_design/tweets', {
-    all: {
-        map: function (doc) {
-            if (doc.retweet_count > 0 && !doc.retweets) emit(doc.tweet_id, doc);
-        }
-    }
-});
 
 
 //-------OAuth----------------------------------
@@ -121,7 +114,6 @@ app.get('/retweets', function(req, res) {
             }
             else {
                 var parsedData = JSON.parse(data);
-                sys.inspect(parsedData);
                 for (var x = 0; x < parsedData.length; x++) {
                     var twt = parsedData[x];
                     console.log(twt);
